@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dataguard-ai"
+version = "0.1.0"
+description = "A learning-first, AI-assisted data quality portfolio project."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "openai>=2,<3",
+    "pandas>=2.2,<3",
+    "psycopg[binary]>=3.2,<4",
+    "streamlit>=1.50,<2",
+]
+
+[project.scripts]
+dataguard-ai = "dataguard_ai.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8,<10", "ruff>=0.9,<1"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"dataguard_ai.ingestion" = ["*.sql"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+markers = ["integration: requires explicit opt-in and a dedicated PostgreSQL test database"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

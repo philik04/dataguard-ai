@@ -1,0 +1,62 @@
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+
+# Python environments, caches, and packaging
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+build/
+dist/
+*.egg-info/
+
+# Raw datasets and local database files
+data/raw/
+# Dataset download archives and Kaggle credentials must stay local.
+*.zip
+*.7z
+*.tar
+*.tar.gz
+*.tgz
+kaggle.json
+.kaggle/
+*.csv
+*.parquet
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.sqlite3-*
+*.duckdb
+*.duckdb.wal
+pgdata/
+
+# Private source reports contain record-level evidence and mutation values.
+# Publish only the reviewed, allowlisted copies under reports/portfolio/.
+reports/generated/
+reports/private/
+reports/**/*.tmp
+.streamlit/secrets.toml
+
+# Editor and operating system files
+.DS_Store
+.idea/
+.vscode/
+
+# Local AI development metadata; not part of the published project.
+/.codex/
+/.agents/
+
+# Withheld Olist-derived publication assets: intended-use suitability unresolved.
+/reports/portfolio/**/*.json
+/docs/assets/dashboard-overview.png
+/docs/assets/dashboard-ingestion.png
+/docs/assets/dashboard-findings.png
+/docs/assets/dashboard-benchmark.png
+/docs/assets/dashboard-explanations.png
