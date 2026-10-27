@@ -92,7 +92,7 @@ SHA-256 fingerprints before/after the tests verify the protected raw and experim
 content at the two checkpoints. They do not exclude external changes between
 checkpoints or provide continuous audit logging.
 
-## Tradeoffs to discuss
+## Engineering tradeoffs
 
 The project favors small explicit modules over orchestration frameworks. Some
 large-file profiling and parent-key sets still require memory proportional to

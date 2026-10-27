@@ -164,11 +164,3 @@ timezone warnings, empty findings, source preservation, report consistency and
 private sentinel values absent from requests/reports. Existing database integration
 tests were not rerun because this layer performs no database work. All ten prior
 report hashes matched after explanation; the original evidence was unchanged.
-
-## Interview practice
-
-1. Why should deterministic evidence and generated interpretation be stored separately?
-2. How does pattern grouping reduce request volume without confusing findings and rows?
-3. Why does a JSON schema alone not establish the factual truth of model prose?
-4. What can allowlisting remove before an external request, and what privacy risks remain?
-5. How can a provider interface support offline tests and a later approved live adapter?

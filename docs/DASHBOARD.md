@@ -136,7 +136,7 @@ may still be sensitive; a local viewer is not permission to publish them.
   selections in all three groups. No additional analytical benefit was demonstrated
   by that test, and agreement does not establish causal truth.
 
-## Streamlit functions to explain in an interview
+## Streamlit implementation notes
 
 `st.set_page_config()` sets the title, icon and wide layout. Streamlit reruns the
 script when a widget changes; `st.sidebar` and `st.radio()` select which rendering

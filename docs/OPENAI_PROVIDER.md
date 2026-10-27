@@ -151,15 +151,3 @@ live quality. The default provider and existing report names remain offline.
   Responses `text.format`, strict schemas and refusal/incomplete handling.
 - [GPT-4o Mini](https://developers.openai.com/api/docs/models/gpt-4o-mini):
   low-cost model family, pinned snapshot, Responses and Structured Outputs support.
-
-## Five technical interview questions
-
-1. Why use a provider protocol, and how does a mocked HTTP transport test more
-   than a mocked `explain()` method?
-2. Why does strict JSON schema validation not prove a root-cause hypothesis true?
-3. How does allowlisted aggregation protect privacy more reliably than redacting
-   identifiers from unrestricted report text?
-4. Why reserve the maximum estimated cost before dispatch and keep the reservation
-   after timeout, and what limits does this budget have?
-5. How do deterministic evidence, reviewed templates and model-selected hypotheses
-   differ, and how does the report make their origins auditable?

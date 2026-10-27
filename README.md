@@ -10,9 +10,9 @@ analysis. DataGuard AI preserves source text, detects explicit rule violations,
 tests the detector against controlled corruptions, and presents traceable evidence
 and investigation guidance. It does not repair data automatically.
 
-This is a learning-first Data Analyst / Data Engineer project. The goal is an
-explainable system with honest measurement, not a claim of production readiness
-or universal data quality coverage. The project includes both an Olist portfolio demonstration and a generic CSV analyzer.
+This portfolio project emphasizes explainable engineering and honest measurement.
+It is not presented as production-ready or as universal data-quality coverage.
+The repository includes an Olist reference pipeline and a generic CSV analyzer.
 
 ## Measured results
 
@@ -219,12 +219,12 @@ Do not stage a new export merely because it was generated successfully.
   projections and Olist screenshots are also excluded pending intended-use clearance.
 - This is a local portfolio application with no authentication, deployment,
   production monitoring, automated repair or account-wide API spending guarantee.
-- An [MIT code license](LICENSE) is prepared for final owner approval.
+- Original project code is available under the [MIT License](LICENSE).
   [NOTICE.md](NOTICE.md) separately attributes Olist-derived artifacts under
   CC BY-NC-SA 4.0. Review intended-use suitability before distributing those artifacts.
 
 [Demo walkthrough](docs/DEMO.md) · [Dashboard internals](docs/DASHBOARD.md) ·
-[Learning log](docs/LEARNING_LOG.md) ·
+[Engineering development log](docs/LEARNING_LOG.md) ·
 [Verification record](docs/VERIFICATION.md)
 
 

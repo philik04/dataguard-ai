@@ -53,6 +53,9 @@ reports/**/*.tmp
 /.codex/
 /.agents/
 
+# Personal interview preparation; preserve locally, never publish.
+/notes/private/
+
 # Withheld Olist-derived publication assets: intended-use suitability unresolved.
 /reports/portfolio/**/*.json
 /docs/assets/dashboard-overview.png

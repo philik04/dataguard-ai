@@ -1,19 +1,19 @@
-# Development learning log
+# Engineering development log
 
 Historical entries record what existed at each milestone; early limitations and
 test counts describe those checkpoints, not the current implementation. See
 [the architecture](ARCHITECTURE.md) and [verification record](VERIFICATION.md) for
 the current system and latest executed checks.
 
-# Phase 0 learning log
+# Phase 0 — Repository foundation
 
-## What I built
+## Implemented scope
 
 A Python repository with an installable `dataguard_ai` package, a `dataguard-ai`
 command, one CLI smoke test, Ruff configuration, and project documentation.
 Six empty packages show the planned responsibilities without implementing them.
 
-## How it works
+## Implementation
 
 `pyproject.toml` defines package metadata, the Python requirement, the build
 backend, the console command, development dependencies, and tool settings.
@@ -32,7 +32,7 @@ exact output, and empty stderr. This verifies the entry-point wiring as well as
 the visible behavior. Ruff checks common errors, import ordering, and selected
 Python best practices; its formatter checks consistent layout.
 
-## Why these choices
+## Design rationale
 
 - The `src/` layout keeps application imports dependent on installation, helping
   reveal packaging problems that imports from the repository root can hide.
@@ -45,7 +45,7 @@ Python best practices; its formatter checks consistent layout.
 - Configuration examples contain placeholders only. Git ignores local secrets,
   environments, generated files, database files, and raw data.
 
-## Alternatives
+## Alternatives considered
 
 - A flat package layout is simpler initially but can hide installation mistakes.
 - `venv` and pip could manage dependencies, but would need a separate workflow
@@ -56,7 +56,7 @@ Python best practices; its formatter checks consistent layout.
 - A unit test calling `main()` directly would be shorter, but would not catch a
   broken console-script mapping. The subprocess smoke test checks that mapping.
 
-## What I can explain in an interview
+## Technical considerations
 
 - Distribution names may contain hyphens (`dataguard-ai`); Python imports use
   the underscore name (`dataguard_ai`). The CLI name is configured independently.
@@ -71,7 +71,7 @@ Python best practices; its formatter checks consistent layout.
 
 # Phase 1A — Dataset Exploration
 
-## What I built
+## Implemented scope
 
 A read-only Pandas CSV profiler in `ingestion/profiler.py`, reached through
 `uv run dataguard-ai profile`. It profiles the nine existing Olist CSVs and
@@ -79,7 +79,7 @@ writes matching JSON and Markdown summaries in `reports/generated/`.
 The original Phase 0 greeting still works. Pandas is the only new direct runtime
 dependency. No database, corruption, AI, or dashboard functionality was added.
 
-## How it works
+## Implementation
 
 1. `profile_dataset()` checks that all nine expected filenames exist. It loads
    one table at a time and validates the columns required by the proposed keys
@@ -108,7 +108,7 @@ dependency. No database, corruption, AI, or dashboard functionality was added.
    directory. No raw row values are exported. Repeat runs overwrite reports;
    errors leave older reports in place, so the process exit status matters.
 
-## Why these choices
+## Design rationale
 
 - Explicit candidate keys and relationships keep the domain assumptions visible.
   They are proposals, not declared database constraints or production rules.
@@ -124,13 +124,13 @@ dependency. No database, corruption, AI, or dashboard functionality was added.
   measure coverage rather than enforce a unique parent constraint. Joining the
   raw lookup directly could inflate row counts and financial totals.
 - One table at a time avoids retaining every CSV and all review text together.
-  Exact duplicate/key counts still require a full table in memory. This is a
-  practical educational tradeoff for the current files, not a streaming engine.
+  Exact duplicate/key counts still require a full table in memory. This is an
+  accepted memory tradeoff for the current files, not a streaming engine.
 - Synthetic CSVs are generated under `tmp_path`; tests need no private/local data
   and exercise leading zeros, nulls, duplicates, composite keys, orphan references,
   parent ambiguity, lookup coverage, empty tables, errors, and report generation.
 
-## Alternatives
+## Alternatives considered
 
 - `chunksize` could reduce table memory, but exact global duplicate/composite-key
   counts would need state across chunks or a disk-based approach. Per-chunk
@@ -138,13 +138,13 @@ dependency. No database, corruption, AI, or dashboard functionality was added.
 - A Pandas merge with `validate="many_to_one"` could check cardinality, but
   membership checks are sufficient here and avoid row multiplication.
 - Automatic exhaustive key discovery could find accidental unique columns and
-  becomes expensive across many column combinations. Listed proposals are easier
-  to explain and challenge.
+  becomes expensive across many column combinations. Listed proposals keep the
+  domain assumptions explicit and reviewable.
 - Automatic date parsing or broader NA markers could help later, but would change
   interpretation. This phase explicitly documents a conservative missing policy
   and keeps semantic guesses separate from storage dtypes.
 
-## What I can explain in an interview
+## Technical considerations
 
 - A table's grain is what one row represents. An item row differs from an order
   row, which is why `order_id + order_item_id` is unique while `order_id` repeats.
@@ -167,7 +167,7 @@ dependency. No database, corruption, AI, or dashboard functionality was added.
 
 # Phase 1B — PostgreSQL foundation and ingestion
 
-## What I built
+## Implemented scope
 
 A local PostgreSQL Compose service with persistent storage and a readiness health
 check; explicit SQL for nine raw tables; an `ingest` CLI using Psycopg COPY;
@@ -176,7 +176,7 @@ JSON report; unit tests and opt-in real-database integration tests. The original
 greeting and Phase 1A profiler are preserved. Shared filenames moved to `tables.py`
 so ingestion does not need to import Pandas. No future-phase functionality exists.
 
-## How it works
+## Implementation
 
 - Compose describes the database container; Python does not start it. The named
   volume keeps database files when a container is stopped or recreated. The
@@ -198,7 +198,7 @@ so ingestion does not need to import Pandas. No future-phase functionality exist
   operation; if it fails, the CLI reports that the database already committed.
   Old reports can survive a failed run, so exit status and report times matter.
 
-## Why these choices
+## Design rationale
 
 - Raw TEXT storage preserves input representations. Typed timestamp/numeric fields
   would reject malformed values or normalize formatting before quality checks.
@@ -212,7 +212,7 @@ so ingestion does not need to import Pandas. No future-phase functionality exist
   requirements. Raw TEXT avoids both floating-point error and premature rounding.
 - No business constraints are imposed on raw records. Missing identifiers,
   duplicate reviews and unmatched categories are evidence for later checks.
-- Replace loading is understandable and repeatable for a static portfolio dataset.
+- Replace loading is explicit and repeatable for a static portfolio dataset.
   It retains original duplicates but avoids doubling row counts on a rerun.
   It replaces the prior raw snapshot, not other schemas or arbitrary tables.
 - COPY avoids one SQL statement/network exchange per row. Parsing one CSV record
@@ -221,7 +221,7 @@ so ingestion does not need to import Pandas. No future-phase functionality exist
   transactional TRUNCATE behavior. Tests only reset an explicitly selected
   database whose name ends in `_test`; default pytest does not connect to a DB.
 
-## Alternatives
+## Alternatives considered
 
 - Typed raw tables would support direct calculations, but would reject invalid
   numeric/date strings. A later validated layer can add types and constraints
@@ -236,7 +236,7 @@ so ingestion does not need to import Pandas. No future-phase functionality exist
 - Docker initialization SQL runs only on a fresh volume. Executing the schema
   from Python makes it available for every ingest and includes DDL in rollback.
 
-## What I can explain in an interview
+## Technical considerations
 
 - A schema is a namespace; a table holds rows. `raw.orders` identifies an orders
   table in the raw namespace, separate from potential later analytical layers.
@@ -279,14 +279,14 @@ formatting checks and the package build passed. The database is available on
 
 # Phase 2A — Deterministic Data Quality Engine
 
-## What I built
+## Implemented scope
 
 Eight explicit rules in `quality/rules.py`, a read-only SQL engine, and JSON/Markdown
 reporting behind `dataguard-ai validate`. Existing greeting, profiler and ingestion
 remain intact. No dependencies, database objects or future-phase features were added.
 The registry exposes rule IDs, descriptions, severity and applicable tables.
 
-## How it works
+## Implementation
 
 `validate_database()` reuses connection configuration. `validate_connection()`
 starts one REPEATABLE READ, READ ONLY transaction with query and lock timeouts.
@@ -310,7 +310,7 @@ identical duplicates or rows without IDs but is not stable after table rewrites.
 Counts represent rule/row/field matches, not distinct bad records. Duplicate-key
 findings include all rows in the group, unlike Phase 1A's beyond-first metric.
 
-## Why these choices
+## Design rationale
 
 - Candidate keys respect grain: order_id repeats legitimately in items, payments
   and reviews. Their composite keys are the contracts. Neither customer_unique_id
@@ -329,19 +329,19 @@ findings include all rows in the group, unlike Phase 1A's beyond-first metric.
   Query timeouts bound database work. Geolocation's million-row table is outside
   these rules because no trustworthy primary-key contract was proposed for it.
 
-## Alternatives
+## Alternatives considered
 
 - SQL casting might be faster but can abort on malformed TEXT. Guarded Python
   parsing keeps bad inputs inspectable and avoids dependence on SQL evaluation
   order. Python scans add overhead and parent sets/findings still need memory.
 - Per-row reference queries would cause excessive round trips. A join could work,
   but would need cardinality handling. Small parent sets are clear for this scale.
-- A validation framework could supply generic checks, but would obscure basic
-  mechanics during this learning phase. No framework is needed for eight rules.
+- A validation framework could supply generic checks, but would obscure the
+  mechanics of this eight-rule implementation without adding necessary capability.
 - Silently normalizing IDs or repairing dates could hide evidence. Validation
   reports problems without deciding how to repair the source.
 
-## What I can explain in an interview
+## Technical considerations
 
 - Table grain determines a key; duplicate order IDs do not imply duplicate items.
 - Storage type, parseability, range validity and business meaning are separate.
@@ -363,17 +363,9 @@ Unit/regression tests and three dedicated-database quality integration tests wer
 run. The latter use session TEMP tables only; existing ingestion integration tests
 were left skipped because their fixtures reset raw. Raw records were not modified.
 
-Interview practice:
-
-1. Why is order_id insufficient as the primary key of order_items?
-2. How do Decimal and guarded datetime parsing protect validation of raw TEXT?
-3. Why use a read-only repeatable-read transaction for a multi-query report?
-4. How do you distinguish a missing foreign key from a missing optional event?
-5. Why is CTID useful here, and why should it not become a permanent identifier?
-
 # Phase 2B — Controlled Corruption Pilot
 
-## What I built
+## Implemented scope
 
 A reproducible 1,000-order pilot in `experiment_pilot`, seven explicit mutation
 types, stable experiment row IDs, a complete mutation manifest, and before/after
@@ -385,7 +377,7 @@ LLM, dashboard or precision/recall calculation.
 contains guarded SQL; `experiment.py` manages the transaction; `reporting.py`
 exports evidence. No new dependency or framework was needed.
 
-## How it works
+## Implementation
 
 1. Rank unique nonblank order IDs using md5(order_id + seed), with explicit C
    collation and a tie-breaker. Copy 1,000 orders, all matching child records,
@@ -409,7 +401,7 @@ exports evidence. No new dependency or framework was needed.
    Failure rolls back creation or restores the previous pilot. Filesystem writes
    are a separate boundary; the persisted run supports export recovery.
 
-## Why these choices
+## Design rationale
 
 - Mutable business keys cannot locate a row after corruption. A separate stable
   experiment key lets us trace even a NULL identifier or duplicate business row.
@@ -426,7 +418,7 @@ exports evidence. No new dependency or framework was needed.
 - The small copied dataset and key/finding sets fit memory. Geolocation is not
   needed by these rules, so copying its million rows would add unnecessary cost.
 
-## Alternatives
+## Alternatives considered
 
 - Per-experiment physical schemas or append-only batches could preserve history,
   but introduce lifecycle management. This phase has one replaceable owned pilot.
@@ -435,9 +427,9 @@ exports evidence. No new dependency or framework was needed.
 - Separate commits for copy, mutation and manifest would leave partial states.
   One transaction preserves an auditable relationship between changes and evidence.
 - Fully random raw-row mutation would complicate parent closure, eligibility and
-  pre-existing findings. This pilot isolates seven understandable error patterns.
+  pre-existing findings. This pilot isolates seven explicitly specified error patterns.
 
-## What I can explain in an interview
+## Technical considerations
 
 - Sampling and relational closure differ: the selected orders determine which
   child and parent records must accompany them. Sampling rows independently could
@@ -475,7 +467,7 @@ deliberately simple and does not establish real-world detection accuracy.
 
 # Phase 3 — Detection Evaluation Framework
 
-## What I built
+## Implemented scope
 
 An explicit matching policy in `docs/EVALUATION.md`, specified before metric
 implementation; independent finding obligations in `evaluation/policy.py`;
@@ -485,7 +477,7 @@ and `dataguard-ai evaluate`. Unit tests cover imperfect results and negative
 controls, and database tests exercise the existing detector and saved manifests.
 No dependencies or changes to the quality rules or simulator were needed.
 
-## How it works
+## Implementation
 
 1. Read the committed run and ordered mutation manifest in a READ ONLY,
    REPEATABLE READ transaction. Verify identities, manifest agreement, event
@@ -512,7 +504,7 @@ all its obligations match. A partially reported duplicate can therefore count
 as a detected event while lowering finding recall. Distinct affected rows are
 another count, not interchangeable with mutations or rule findings.
 
-## Why these choices
+## Design rationale
 
 - The evaluation unit determines the denominator. The verified pilot's 70
   events imply 80 finding obligations, because ten duplicate insertions each
@@ -541,7 +533,7 @@ another count, not interchangeable with mutations or rule findings.
 - Rejecting overlapping mutation rows keeps attribution explicit for this pilot.
   A larger interacting-corruption benchmark would need a revised policy.
 
-## Alternatives
+## Alternatives considered
 
 - Event-only recall would hide incomplete duplicate reporting. Finding-only
   recall would hide out-of-contract semantic changes. Both denominators matter.
@@ -551,10 +543,10 @@ another count, not interchangeable with mutations or rule findings.
   old result rather than current code. Recreating the experiment would risk
   changing the evidence; this command only reads the existing committed pilot.
 - Scikit-learn could calculate ratios, but three explicit formulas and ordinary
-  dictionaries are easier to explain and avoid adding a dependency. A general
+  dictionaries keep the implementation inspectable and avoid adding a dependency. A general
   matching framework is unnecessary for seven disjoint mutation contracts.
 
-## What I can explain in an interview
+## Technical considerations
 
 - Precision asks which new alarms match labels; recall asks which expected
   finding obligations were recovered. F1 balances these at the same unit.
@@ -603,18 +595,9 @@ report hashes. Non-cryptographic SQL guards are not archival proof. No original
 raw/experiment records, quality rules, credentials or existing reports changed.
 Only evaluation reports were generated. No commit or push was performed.
 
-Interview practice:
-
-1. Why do 70 mutation events produce 80 expected finding obligations?
-2. How does one-to-one evidence matching prevent inflated precision and recall?
-3. How do baseline findings and unlabeled genuine issues affect FP interpretation?
-4. Why can a clean control have undefined metrics, and a plausible-price test
-   have perfect finding recall but only 2/3 event detection?
-5. What do READ ONLY, REPEATABLE READ and a content digest each guarantee?
-
 # Phase 4A — AI Explanation Foundation
 
-## What I built
+## Implemented scope
 
 A public `explain_findings(findings, provider)` interface, aggregate evidence
 grouping, a reviewed explanation catalog for all eight rule families, a zero-cost
@@ -623,7 +606,7 @@ choice validation, typed structured explanations and JSON/Markdown reports.
 CLI: `uv run dataguard-ai explain --provider offline`. No new dependencies,
 database operations, paid API calls or automatic corrections were introduced.
 
-## How it works
+## Implementation
 
 1. Read the existing completed `quality.json`. Check its shape, completion time
    and agreement between summary counts and actual findings. Keep its SHA-256
@@ -653,7 +636,7 @@ the expected `name` and `explain(group)` method can be used without framework
 inheritance. Dataclasses make the group and output fields explicit. Ordinary
 dictionaries, sorted keys, `len()` and `set()` handle grouping and counts.
 
-## Why these choices
+## Design rationale
 
 - The deterministic engine decides what violates a contract. An explanation
   provider cannot change counts, severity or evidence. Grouping 197 findings
@@ -678,7 +661,7 @@ dictionaries, sorted keys, `len()` and `set()` handle grouping and counts.
   execution and the CLI's OpenAI option fail closed. A key alone enables nothing.
   No live model compatibility has been established.
 
-## Alternatives
+## Alternatives considered
 
 - Sending each raw finding would duplicate context and expose identifiers or
   values unnecessarily. Sending only a total per rule would hide distinct
@@ -693,7 +676,7 @@ dictionaries, sorted keys, `len()` and `set()` handle grouping and counts.
   interpretation. Reading an existing report keeps the two operations separate
   and makes offline reproduction possible when PostgreSQL is stopped.
 
-## What I can explain in an interview
+## Technical considerations
 
 - A provider interface separates application policy from an external service.
   Offline implementations support deterministic tests and a later live adapter.
@@ -740,19 +723,12 @@ records were never accessed or changed. No paid API call, repair, dashboard,
 commit or push occurred. This foundation does not establish live LLM quality or
 general real-world detection accuracy.
 
-Interview practice:
-
-1. Why separate deterministic evidence from generated interpretation?
-2. How does grouping reduce request volume while preserving meaningful patterns?
-3. Why is JSON schema validity insufficient to prove an explanation is factual?
-4. Which data is removed before the provider boundary, and what privacy risks remain?
-5. How does an offline provider prepare the architecture for an approved live one?
-
 # Phase 4B — OpenAI Explanation Provider (2026-10-23)
 
 Implemented an optional official-SDK Responses adapter while retaining offline
-as the default. This phase is complete with mocked verification only; a real
-API call still requires user approval and explicit `--allow-paid-api`.
+as the default. Initial integration verification used mocked responses. A
+separately approved controlled live test followed later on 2026-10-23; future
+requests still require explicit authorization and `--allow-paid-api`.
 
 The existing provider protocol was intentionally preserved: `explain(group)`
 returns reviewed hypothesis/impact/investigation IDs. The OpenAI response adds
@@ -770,8 +746,8 @@ paying for explanations of an inconsistent input. Neither raw findings nor
 identifiers cross the boundary. Aggregates and reviewed option text do cross it;
 aggregate privacy remains a real consideration.
 
-Learned why the SDK retry default must be overridden explicitly (`max_retries=0`)
-and why a timeout does not prove a request was free. The adapter reserves request
+The SDK retry default is overridden explicitly (`max_retries=0`) because a timeout
+does not prove a request was free. The adapter reserves request
 count and conservative estimated cost before dispatch and keeps that reservation
 after failure. No retry or fallback happens silently. A requested offline fallback
 restarts the whole explanation, marks the output and retains attempted usage.
@@ -799,8 +775,8 @@ explicit fallback. They use dummy credentials and cannot reach an API endpoint.
 No live account compatibility or live explanation quality is claimed.
 
 No paid API calls, database mutations, automatic corrections, dashboard work,
-commit or push occurred. Phase 4B stops here. Full architecture and five technical
-interview questions are in [OpenAI provider notes](OPENAI_PROVIDER.md).
+commit or push occurred at this checkpoint. The full provider architecture is in
+[OpenAI provider notes](OPENAI_PROVIDER.md).
 
 # Phase 5A — Streamlit Portfolio Dashboard (2026-10-23)
 
@@ -810,8 +786,8 @@ new direct dependency. Overview, Findings, Corruption & evaluation, and AI
 explanations present the existing saved evidence. There are no buttons that
 execute validation, connect to PostgreSQL, call OpenAI or modify records.
 
-The central design lesson is to remove private fields before calling any UI
-function, rather than hiding columns in a raw dataframe. The server reads the
+The privacy boundary removes private fields before calling any UI function,
+rather than hiding columns in a raw dataframe. The server reads the
 original report, validates structural fields using existing grouping/catalog
 contracts, and constructs new public dictionaries. Business identifier values,
 CTIDs, corruption values and arbitrary report text never reach the browser.
@@ -899,23 +875,9 @@ rules alone perform detection. The 100% result still means only the predefined
 synthetic finding benchmark, with known coverage/evasion limits and N/A for
 untested DQ008 positive cases. No financial business impact was measured.
 
-Interview talking points:
-
-1. Explain why raw TEXT preservation plus transactional COPY retains inspectable
-   anomalies, and why row-count equality alone is not a value-integrity proof.
-2. Explain repeatable-read, read-only snapshots and why disposable-fixture identity
-   checks are stronger than trusting a database-name suffix.
-3. Derive the 80 expected findings from 70 events and discuss baseline-aware
-   one-to-one matching, unsupported semantic errors and absence of a real holdout.
-4. Distinguish structured-output shape checks, exact evidence invariants and the
-   unresolved causal truth of a selected hypothesis.
-5. Explain why column hiding is not privacy, why publication artifacts need their
-   own projection, and how public/source hashes support honest provenance.
-
-Remaining owner decisions: code license, dataset/aggregate distribution review,
-final staged diff, commit plan and separate permission to push/publish. No license
-was guessed and no Git changes were staged. The heuristic/exact-secret scan has
-no current findings; it does not replace manual review. See
+At this checkpoint the remaining work was code licensing, dataset/aggregate
+distribution review, final staging and separate publication approval. The
+heuristic/exact-secret scan had no findings; it did not replace manual review. See
 [Phase 5B audit](PHASE5B_AUDIT.md) and [verification record](VERIFICATION.md).
 
 
@@ -942,8 +904,8 @@ Undefined scores remain N/A and zero missed findings remain explicit in the tabl
 
 The AI view states that the live model selected the same reviewed interpretations
 as the offline provider in all three groups, so this test demonstrated no additional
-analytical benefit. Provider engineering and guardrails remain worthwhile learning
-outcomes, but identical selections are not evidence of better causal analysis.
+analytical benefit. Provider engineering and guardrails remain useful architectural
+evidence, but identical selections are not evidence of better causal analysis.
 Interpretations default to stacked layout with an optional side-by-side display;
 wrapped evidence text and a shared confidence section are easier to read on mobile.
 
@@ -959,9 +921,9 @@ distribution and final staged-file/publication review remain outstanding.
 
 ## Phase 6A — generic CSV analysis (2026-10-24)
 
-The Olist profiler encodes dataset-specific key candidates and relationships. I
-kept it and the eight SQL quality contracts intact instead of pretending they
-would generalize to unknown CSVs. The new standard-library `generic/analysis.py`
+The Olist profiler encodes dataset-specific key candidates and relationships.
+It and the eight SQL quality contracts remain intact because those assumptions do
+not generalize to unknown CSVs. The standard-library `generic/analysis.py`
 works with arbitrary text columns, a bounded `Dataset` and explicit `Rules`.
 Dashboard navigation branches into `dashboard/upload.py` before loading reports.
 This preserves the four Olist views and makes generic analysis usable without a
@@ -1005,11 +967,11 @@ checks found no change to 65 protected CSV/report/core files. The publication
 audit found zero findings among 91 candidate files (heuristic, not a guarantee).
 No database operation, paid request, correction, commit, push or publication ran.
 
-Interview talking points: why CSV cells remain text; how profiling differs from
-validation; why Decimal and explicit date formats are used; how complete failure
-counts coexist with sampled details; why loopback/session memory do not imply
-safe public hosting; and why Olist's 100% synthetic benchmark says nothing about
-accuracy on arbitrary uploads. Phase 6A stops here for owner review.
+The main engineering considerations are why CSV cells remain text; how profiling
+differs from validation; why Decimal and explicit date formats are used; how
+complete failure counts coexist with sampled details; why loopback/session memory
+does not imply safe public hosting; and why Olist's 100% synthetic benchmark says
+nothing about accuracy on arbitrary uploads.
 
 
 ## Licensing and reproducibility review — 2026-10-24
@@ -1032,8 +994,8 @@ are executed historical checks, not new test runs during documentation cleanup.
 
 During subsequent presentation review, the author confirmed **Philipp Kulbatskiy**
 as the public copyright holder and project author. Release coordination notes and
-staging instructions were kept outside the public documentation. Technical design,
-learning decisions, tests and verification evidence remain available. See
+staging instructions were kept outside the public documentation. Technical design
+decisions, tests and verification evidence remain available. See
 [VERIFICATION.md](VERIFICATION.md) for the public verification record.
 
 The central boundaries remain unchanged: deterministic rules establish declared

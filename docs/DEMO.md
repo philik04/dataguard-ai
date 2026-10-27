@@ -45,7 +45,7 @@ Offline explanation needs no API key; missing live reports remain unavailable.
 Olist-derived historical screenshots and projected reports are not distributed;
 see [the asset review](DATASET_LICENSE.md).
 
-## Points to explain
+## Technical observations
 
 - Structural observations differ from user-declared business constraints.
 - Text preservation avoids losing invalid values and leading zeros.
