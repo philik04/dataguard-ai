@@ -14,30 +14,14 @@ This portfolio project emphasizes explainable engineering and honest measurement
 It is not presented as production-ready or as universal data-quality coverage.
 The repository includes an Olist reference pipeline and a generic CSV analyzer.
 
-## Measured results
+## Review in two minutes
 
-| Stage | Observed result | What it means |
-| --- | --- | --- |
-| Ingestion | **1,550,922 rows across nine tables** | CSV, COPY and database row counts reconciled; rows are not unique orders |
-| Original validation | **189 chronology violations and eight warnings** | Eight declared deterministic rules; warnings are distinct from confirmed violations |
-| Controlled pilot | **1,000 selected orders, 70 mutation events** | Seven predefined mutation types, ten events each, in an isolated experiment schema |
-| Detection benchmark | **80 TP, 0 FP, 0 FN; precision/recall/F1 = 100%** | Finding-level results on the predefined synthetic benchmark only |
-| Explanation grouping | **197 findings → three evidence groups** | Aggregate structural evidence without raw source values or business IDs |
-| Historical live AI test | **Three requests; USD 0.004783 estimated** | 2,359 input / 606 output tokens; validated selections matched offline output; no additional analytical benefit demonstrated |
-
-**The 100% scores do not measure general real-world accuracy.** The mutation
-scenarios were designed around known rule contracts, there is no independent
-real-world labeled holdout, and plausible wrong values can evade the rules. DQ008
-has no positive mutation case in this benchmark; its undefined per-rule scores
-remain N/A. One duplicate mutation produces two expected findings, explaining
-why 70 events correspond to 80 finding obligations. See
-[benchmark interpretation](docs/EVALUATION.md#publication-interpretation).
-
-Counts and validation snapshots were recorded on 2026-10-19. Offline/live
-explanation snapshots are dated 2026-10-23. Phase 5B verification is dated
-2026-10-24. The dashboard displays report timestamps and never implies a fresh
-scan of the database. AI cost is a conservative estimate using recorded rate
-assumptions, not an invoice.
+| Explore | Evidence |
+| --- | --- |
+| Try the product | [Synthetic CSV walkthrough](docs/DEMO.md): no database, dataset download or API key |
+| Inspect the implementation | [Bounded CSV analyzer](src/dataguard_ai/generic/analysis.py), [transactional ingestion](src/dataguard_ai/ingestion/loader.py) and [deterministic rules](src/dataguard_ai/quality/rules.py) |
+| Review the engineering choices | [Architecture](docs/ARCHITECTURE.md), [benchmark matching policy](src/dataguard_ai/evaluation/policy.py) and [constrained AI provider](docs/OPENAI_PROVIDER.md) |
+| Check the evidence | [Verification record](docs/VERIFICATION.md), [synthetic tests](tests) and [benchmark limitations](docs/EVALUATION.md#publication-interpretation) |
 
 ## Try the CSV analyzer without credentials or API calls
 
@@ -53,6 +37,13 @@ Open [the local dashboard](http://127.0.0.1:8501) and select
 **Mode → Analyze Your CSV**. Follow the [synthetic CSV walkthrough](docs/DEMO.md).
 Dependencies require a package-index connection on first installation; analysis
 itself makes no API/database requests. No OpenAI API key is required.
+
+The walkthrough analyzes **four synthetic records across three columns** and
+reports **seven configured-rule failures**. It demonstrates missing values,
+duplicate keys, invalid/negative numbers and malformed dates; the screenshot
+below shows that synthetic result.
+
+![Generic CSV analysis using synthetic retail data](docs/assets/dashboard-csv.png)
 
 Olist-derived report JSONs and screenshots are **not distributed** in this release:
 their suitability for this portfolio's intended use remains unresolved under the
@@ -86,7 +77,30 @@ The generic checks cannot detect all semantic or business errors and have no
 claimed benchmark accuracy. Existing Olist metrics apply only to the original demo.
 See [usage, architecture and boundaries](docs/GENERIC_CSV.md).
 
-![Generic CSV analysis using synthetic retail data](docs/assets/dashboard-csv.png)
+## Measured results
+
+| Stage | Observed result | What it means |
+| --- | --- | --- |
+| Ingestion | **1,550,922 rows across nine tables** | CSV, COPY and database row counts reconciled; rows are not unique orders |
+| Original validation | **189 chronology violations and eight warnings** | Eight declared deterministic rules; warnings are distinct from confirmed violations |
+| Controlled pilot | **1,000 selected orders, 70 mutation events** | Seven predefined mutation types, ten events each, in an isolated experiment schema |
+| Detection benchmark | **80 TP, 0 FP, 0 FN; precision/recall/F1 = 100%** | Finding-level results on the predefined synthetic benchmark only |
+| Explanation grouping | **197 findings → three evidence groups** | Aggregate structural evidence without raw source values or business IDs |
+| Historical live AI test | **Three requests; USD 0.004783 estimated** | 2,359 input / 606 output tokens; validated selections matched offline output; no additional analytical benefit demonstrated |
+
+**The 100% scores do not measure general real-world accuracy.** The mutation
+scenarios were designed around known rule contracts, there is no independent
+real-world labeled holdout, and plausible wrong values can evade the rules. DQ008
+has no positive mutation case in this benchmark; its undefined per-rule scores
+remain N/A. One duplicate mutation produces two expected findings, explaining
+why 70 events correspond to 80 finding obligations. See
+[benchmark interpretation](docs/EVALUATION.md#publication-interpretation).
+
+Counts and validation snapshots were recorded on 2026-10-19. Offline/live
+explanation snapshots are dated 2026-10-23. Phase 5B verification is dated
+2026-10-24. The dashboard displays report timestamps and never implies a fresh
+scan of the database. AI cost is a conservative estimate using recorded rate
+assumptions, not an invoice.
 
 ## Architecture
 
